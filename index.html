@@ -38,12 +38,48 @@ cat << 'EOF' > index.html
       height: 100%;
       z-index: 0;
       pointer-events: none;
-      opacity: 0.55;
+      opacity: 0.65;
+    }
+
+    .side-note {
+      position: fixed;
+      bottom: 18px;
+      z-index: 1;
+      max-width: 180px;
+      font-size: 0.72rem;
+      line-height: 1.35;
+      color: #94a3b8;
+      background: rgba(10, 15, 24, 0.72);
+      border: 1px solid rgba(45, 212, 191, 0.18);
+      padding: 0.45rem 0.65rem;
+      border-radius: 8px;
+      pointer-events: none;
+      backdrop-filter: blur(6px);
+    }
+
+    .side-note.left {
+      left: 16px;
+      text-align: left;
+    }
+
+    .side-note.right {
+      right: 16px;
+      text-align: right;
+    }
+
+    .side-note strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 0.15rem;
+    }
+
+    @media (max-width: 1120px) {
+      .side-note { display: none; }
     }
 
     .container {
       position: relative;
-      z-index: 1;
+      z-index: 2;
       width: 100%;
       max-width: 760px;
       background: var(--card);
@@ -235,10 +271,20 @@ cat << 'EOF' > index.html
 <body>
   <canvas id="dna-bg"></canvas>
 
+  <div class="side-note left">
+    <strong>← Left Half (24 Q&As)</strong>
+    Computational biology: BLAST, FASTA, alignment, SNPs, docking &amp; databases.
+  </div>
+
+  <div class="side-note right">
+    <strong>Right Half (16 Q&As) →</strong>
+    Basic biology: DNA/RNA, cells, mitosis, photosynthesis, enzymes &amp; ATP.
+  </div>
+
   <div class="container">
     <div class="header">
       <div class="title-wrap">
-        <h2>🧬 Computational & Basic Biology AI Chatbot</h2>
+        <h2>🧬 Computational &amp; Basic Biology AI Chatbot</h2>
         <p>TF-IDF (1–2 n-grams) + Cosine Similarity · 40-Concept KB · Threshold ≥ 0.20</p>
       </div>
       <div class="badge"><span class="dot"></span> Bio-NLP Active</div>
@@ -508,4 +554,3 @@ cat << 'EOF' > index.html
 </body>
 </html>
 EOF
-
