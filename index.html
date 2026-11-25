@@ -1,53 +1,383 @@
+cat << 'EOF' > index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Computational Biology Chatbot</title>
+  <title>Computational & Basic Biology AI Chatbot</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; background: #f8fafc; color: #0f172a; }
-    h2 { margin-bottom: 0.25rem; color: #0f766e; }
-    p.sub { margin-top: 0; color: #475569; font-size: 0.9rem; }
-    #chat { height: 380px; overflow-y: auto; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 0.8rem; }
-    .msg { padding: 0.6rem 0.85rem; border-radius: 8px; max-width: 82%; line-height: 1.4; font-size: 0.95rem; }
-    .user { background: #ccfbf1; align-self: flex-end; }
-    .bot { background: #f1f5f9; align-self: flex-start; }
-    .meta { font-size: 0.75rem; color: #64748b; margin-top: 0.25rem; }
-    .row { display: flex; gap: 0.5rem; }
-    input { flex: 1; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; }
-    button { padding: 0.65rem 1.1rem; background: #0f766e; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
-    button:hover { background: #115e59; }
+    :root {
+      --bg: #05070a;
+      --card: rgba(13, 18, 28, 0.78);
+      --border: rgba(45, 212, 191, 0.22);
+      --accent: #2dd4bf;
+      --accent-2: #38bdf8;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #0b192c 0%, var(--bg) 65%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      overflow-x: hidden;
+    }
+
+    #dna-bg {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.55;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 760px;
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.4rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75), 0 0 30px rgba(45, 212, 191, 0.08);
+      animation: floatIn 0.6s ease-out;
+    }
+
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      padding-bottom: 0.85rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .title-wrap h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.2px;
+    }
+
+    .title-wrap p {
+      margin: 0.2rem 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: rgba(45, 212, 191, 0.1);
+      border: 1px solid rgba(45, 212, 191, 0.3);
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .chip {
+      background: rgba(30, 41, 59, 0.75);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 999px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      color: #fff;
+      background: rgba(45, 212, 191, 0.15);
+      transform: translateY(-1px);
+    }
+
+    #chat {
+      height: 360px;
+      overflow-y: auto;
+      background: rgba(7, 10, 16, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+      scroll-behavior: smooth;
+    }
+
+    #chat::-webkit-scrollbar { width: 6px; }
+    #chat::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 3px; }
+
+    .msg {
+      padding: 0.65rem 0.9rem;
+      border-radius: 12px;
+      max-width: 82%;
+      line-height: 1.45;
+      font-size: 0.92rem;
+      animation: msgPop 0.25s ease-out;
+    }
+
+    @keyframes msgPop {
+      from { opacity: 0; transform: translateY(6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #0d9488, #0284c7);
+      color: #fff;
+      border-bottom-right-radius: 3px;
+      box-shadow: 0 4px 14px rgba(13, 148, 136, 0.28);
+    }
+
+    .bot {
+      align-self: flex-start;
+      background: rgba(30, 41, 59, 0.85);
+      color: var(--text);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-bottom-left-radius: 3px;
+    }
+
+    .meta {
+      font-size: 0.72rem;
+      color: var(--accent);
+      margin-top: 0.35rem;
+      opacity: 0.85;
+    }
+
+    .row {
+      display: flex;
+      gap: 0.55rem;
+    }
+
+    input {
+      flex: 1;
+      padding: 0.72rem 0.95rem;
+      background: rgba(15, 23, 42, 0.9);
+      color: #fff;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+    }
+
+    button.send-btn {
+      padding: 0.72rem 1.25rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #042f2e;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    button.send-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(45, 212, 191, 0.35);
+    }
   </style>
 </head>
 <body>
-  <h2>Computational Biology AI Chatbot</h2>
-  <p class="sub">TF-IDF (1–2 n-grams) + Cosine Similarity (threshold = 0.20)</p>
+  <canvas id="dna-bg"></canvas>
 
-  <div id="chat">
-    <div class="msg bot">Hi! Ask a question about basic computational biology concepts (e.g., BLAST, FASTA, SNP, docking, alignment, central dogma).</div>
-  </div>
+  <div class="container">
+    <div class="header">
+      <div class="title-wrap">
+        <h2>🧬 Computational & Basic Biology AI Chatbot</h2>
+        <p>TF-IDF (1–2 n-grams) + Cosine Similarity · 40-Concept KB · Threshold ≥ 0.20</p>
+      </div>
+      <div class="badge"><span class="dot"></span> Bio-NLP Active</div>
+    </div>
 
-  <div class="row">
-    <input id="q" type="text" placeholder="Type your question..." onkeydown="if(event.key==='Enter') send()" />
-    <button onclick="send()">Ask</button>
+    <div class="chips">
+      <button class="chip" onclick="quickAsk('What is BLAST?')">What is BLAST?</button>
+      <button class="chip" onclick="quickAsk('Difference between DNA and RNA')">DNA vs RNA</button>
+      <button class="chip" onclick="quickAsk('Difference between mitosis and meiosis')">Mitosis vs Meiosis</button>
+      <button class="chip" onclick="quickAsk('Tell me about FASTA format')">FASTA format</button>
+      <button class="chip" onclick="quickAsk('What is photosynthesis?')">Photosynthesis</button>
+      <button class="chip" onclick="quickAsk('What is molecular docking?')">Molecular Docking</button>
+    </div>
+
+    <div id="chat">
+      <div class="msg bot">
+        Welcome! Ask me any basic biology or computational biology question (e.g., DNA, RNA, mitosis, enzymes, BLAST, FASTA, SNP, docking)—or click a chip above.
+      </div>
+    </div>
+
+    <div class="row">
+      <input id="q" type="text" placeholder="Ask a biology or bioinformatics question..." onkeydown="if(event.key==='Enter') send()" />
+      <button class="send-btn" onclick="send()">Ask</button>
+    </div>
   </div>
 
   <script>
+    // Animated DNA Double Helix & Floating Bio-Particles Background
+    const canvas = document.getElementById("dna-bg");
+    const ctx = canvas.getContext("2d");
+    let w, h, t = 0;
+
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    const particles = Array.from({ length: 35 }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 2 + 0.8,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35
+    }));
+
+    function drawHelix(centerX, amplitude, speed, phaseOffset) {
+      const spacing = 26;
+      const rows = Math.ceil(h / spacing) + 2;
+      for (let i = -1; i < rows; i++) {
+        const y = i * spacing;
+        const angle = i * 0.32 + t * speed + phaseOffset;
+        const x1 = centerX + Math.sin(angle) * amplitude;
+        const x2 = centerX + Math.sin(angle + Math.PI) * amplitude;
+        const z1 = Math.cos(angle);
+        const z2 = Math.cos(angle + Math.PI);
+
+        ctx.strokeStyle = "rgba(45, 212, 191, 0.16)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x1, y);
+        ctx.lineTo(x2, y);
+        ctx.stroke();
+
+        ctx.fillStyle = z1 > 0 ? "rgba(45, 212, 191, 0.75)" : "rgba(45, 212, 191, 0.25)";
+        ctx.beginPath();
+        ctx.arc(x1, y, z1 > 0 ? 3.4 : 2.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = z2 > 0 ? "rgba(56, 189, 248, 0.75)" : "rgba(56, 189, 248, 0.25)";
+        ctx.beginPath();
+        ctx.arc(x2, y, z2 > 0 ? 3.4 : 2.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+      for (const p of particles) {
+        p.x = (p.x + p.vx + w) % w;
+        p.y = (p.y + p.vy + h) % h;
+        ctx.fillStyle = "rgba(56, 189, 248, 0.22)";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      drawHelix(w * 0.12, 38, 0.025, 0);
+      drawHelix(w * 0.88, 38, 0.025, 1.5);
+      t += 1;
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // Knowledge Base: 24 Computational Biology + 16 Foundational Biology Q&A Pairs
     const KB = [
-      ["What is bioinformatics?", "Bioinformatics applies computer science, statistics, and algorithms to analyze biological data such as DNA, RNA, and protein sequences."],
+      // Computational Biology
+      ["What is bioinformatics?", "Bioinformatics applies computer science, statistics, and algorithms to store, retrieve, and analyze biological data such as DNA, RNA, and protein sequences."],
+      ["What is computational biology?", "Computational biology uses mathematical modeling, simulations, and computational algorithms to understand biological systems and processes."],
       ["What is a genome?", "A genome is the complete set of genetic material (DNA, or RNA in some viruses) present in an organism."],
+      ["What is a gene?", "A gene is a specific functional sequence of nucleotides in DNA that encodes a protein or functional RNA molecule."],
       ["What is sequence alignment?", "Sequence alignment arranges DNA, RNA, or protein sequences to identify regions of similarity that may indicate functional, structural, or evolutionary relationships."],
-      ["What is the difference between global and local alignment?", "Global alignment (Needleman-Wunsch) aligns sequences end-to-end, while local alignment (Smith-Waterman) finds the highest-scoring conserved regions within sequences."],
+      ["What is the difference between global and local alignment?", "Global alignment (Needleman-Wunsch) aligns sequences end-to-end across their entire length, while local alignment (Smith-Waterman) finds the highest-scoring conserved regions within sequences."],
       ["What is BLAST?", "BLAST (Basic Local Alignment Search Tool) is a heuristic algorithm used to rapidly search sequence databases for regions similar to a query sequence."],
-      ["What is a FASTA file?", "FASTA is a text-based sequence format where a header line starting with '>' is followed by sequence characters on subsequent lines."],
+      ["What is a FASTA file?", "FASTA is a text-based sequence format where a description header line starting with '>' is followed by nucleotide or amino acid sequence characters."],
       ["What is GenBank?", "GenBank is the NIH genetic sequence database containing an annotated collection of all publicly available nucleotide sequences and protein translations."],
-      ["What is PDB?", "The Protein Data Bank (PDB) is a repository of 3D structural data for biological macromolecules such as proteins and nucleic acids."],
+      ["What is PDB?", "The Protein Data Bank (PDB) is an open-access repository of 3D structural data for biological macromolecules such as proteins and nucleic acids."],
+      ["What is a phylogenetic tree?", "A phylogenetic tree is a branching diagram that represents evolutionary relationships among biological species or sequences inferred from genetic or morphological data."],
+      ["What is next-generation sequencing?", "Next-generation sequencing (NGS) refers to high-throughput technologies that sequence millions of DNA or RNA fragments in parallel."],
+      ["What is RNA-Seq?", "RNA-Seq (RNA sequencing) uses high-throughput sequencing to measure and analyze the transcriptome, revealing gene expression levels and splicing variants."],
       ["What is a SNP?", "A single nucleotide polymorphism (SNP) is a variation at a single base position in a DNA sequence occurring commonly within a population."],
-      ["What is molecular docking?", "Molecular docking is a computational method that predicts the preferred orientation and binding affinity of a ligand inside a protein binding site."],
+      ["What is a mutation?", "A mutation is a permanent alteration in the nucleotide sequence of a genome, which can be silent, missense, nonsense, or frameshift."],
+      ["What is molecular docking?", "Molecular docking is a computational method used in drug discovery to predict the preferred orientation and binding affinity of a ligand inside a protein binding site."],
+      ["What is a scoring matrix?", "A scoring matrix (such as PAM or BLOSUM) assigns scores to aligned amino acid or nucleotide pairs based on evolutionary substitution probabilities."],
+      ["What is systems biology?", "Systems biology studies complex interactions within biological networks—such as metabolic, signaling, and gene regulatory networks—as an integrated whole."],
+      ["What are stem cells?", "Stem cells are undifferentiated cells capable of self-renewal and differentiation into specialized cell types."],
       ["What is the central dogma of molecular biology?", "The central dogma describes the flow of genetic information from DNA to RNA via transcription and from RNA to protein via translation."],
       ["What is a protein structure?", "Protein structure is organized into primary (amino acid sequence), secondary (alpha-helices, beta-sheets), tertiary (3D fold), and quaternary (multi-subunit) levels."],
-      ["What is next-generation sequencing (NGS)?", "Next-generation sequencing (NGS) refers to high-throughput technologies that sequence millions of DNA or RNA fragments in parallel."],
-      ["What is a phylogenetic tree?", "A phylogenetic tree is a branching diagram that represents evolutionary relationships among biological species or sequences inferred from genetic or morphological data."]
+      ["What is homology modeling?", "Homology modeling predicts the 3D structure of a target protein using the known experimental structure of a related homologous protein as a template."],
+      ["What is multiple sequence alignment?", "Multiple sequence alignment (MSA) aligns three or more biological sequences simultaneously to identify conserved motifs and infer evolutionary history."],
+      ["What is gene ontology?", "Gene Ontology (GO) is a standardized vocabulary describing gene and gene product attributes across biological processes, cellular components, and molecular functions."],
+
+      // Basic / Foundational Biology
+      ["What is a cell?", "A cell is the basic structural, functional, and biological unit of all known living organisms."],
+      ["What is the difference between prokaryotic and eukaryotic cells?", "Prokaryotic cells (like bacteria) lack a membrane-bound nucleus and organelles, whereas eukaryotic cells (plants, animals, fungi) have a true nucleus and membrane-bound organelles."],
+      ["What is the difference between DNA and RNA?", "DNA is double-stranded, uses deoxyribose sugar and thymine (T), and stores long-term genetic info; RNA is usually single-stranded, uses ribose sugar and uracil (U), and helps synthesize proteins."],
+      ["What is transcription?", "Transcription is the process where RNA polymerase copies a segment of DNA into a complementary messenger RNA (mRNA) strand."],
+      ["What is translation?", "Translation is the process in which ribosomes decode mRNA codons into a specific chain of amino acids to build a protein."],
+      ["What are mitochondria?", "Mitochondria are double-membrane organelles in eukaryotic cells that generate most of the cell's ATP energy through cellular respiration."],
+      ["What are ribosomes?", "Ribosomes are molecular machines made of rRNA and proteins that synthesize proteins by translating mRNA sequences."],
+      ["What is photosynthesis?", "Photosynthesis is the process by which plants, algae, and some bacteria convert light energy, water, and carbon dioxide into glucose and oxygen."],
+      ["What is cellular respiration?", "Cellular respiration is the metabolic process that breaks down glucose in the presence of oxygen (glycolysis, Krebs cycle, electron transport chain) to produce ATP energy."],
+      ["What is the difference between mitosis and meiosis?", "Mitosis produces two genetically identical diploid somatic cells for growth and repair, while meiosis produces four genetically diverse haploid gametes for sexual reproduction."],
+      ["What is an enzyme?", "An enzyme is a biological catalyst (usually a protein) that speeds up biochemical reactions by lowering activation energy without being consumed."],
+      ["What is osmosis?", "Osmosis is the passive movement of water molecules across a selectively permeable membrane from a region of lower solute concentration to higher solute concentration."],
+      ["What is homeostasis?", "Homeostasis is the ability of an organism or cell to maintain a stable internal environment (such as temperature, pH, and glucose levels) despite external changes."],
+      ["What is a chromosome?", "A chromosome is a tightly coiled structure of DNA wrapped around histone proteins that carries genetic information during cell division."],
+      ["What is natural selection?", "Natural selection is the evolutionary mechanism where organisms with traits better adapted to their environment survive and reproduce at higher rates."],
+      ["What is ATP?", "ATP (adenosine triphosphate) is the primary energy-carrying molecule used to power cellular processes in living organisms."]
     ];
 
     const STOPWORDS = new Set([
@@ -156,6 +486,11 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
+    function quickAsk(question) {
+      document.getElementById("q").value = question;
+      send();
+    }
+
     function send() {
       const input = document.getElementById("q");
       const text = input.value.trim();
@@ -165,10 +500,12 @@
 
       const res = askBot(text);
       const meta = res.matched
-        ? `Matched: "${res.matched}" | Similarity: ${res.score.toFixed(2)}`
-        : `Similarity: ${Math.max(0, res.score).toFixed(2)} (< ${THRESHOLD.toFixed(2)})`;
+        ? `Matched: "${res.matched}" · Cosine Similarity: ${res.score.toFixed(2)}`
+        : `Cosine Similarity: ${Math.max(0, res.score).toFixed(2)} (< ${THRESHOLD.toFixed(2)})`;
       appendMessage(res.answer, "bot", meta);
     }
   </script>
 </body>
 </html>
+EOF
+
