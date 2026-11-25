@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Computational Biology Chatbot</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; background: #f8fafc; color: #0f172a; }
+    h2 { margin-bottom: 0.25rem; color: #0f766e; }
+    p.sub { margin-top: 0; color: #475569; font-size: 0.9rem; }
+    #chat { height: 380px; overflow-y: auto; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 0.8rem; }
+    .msg { padding: 0.6rem 0.85rem; border-radius: 8px; max-width: 82%; line-height: 1.4; font-size: 0.95rem; }
+    .user { background: #ccfbf1; align-self: flex-end; }
+    .bot { background: #f1f5f9; align-self: flex-start; }
+    .meta { font-size: 0.75rem; color: #64748b; margin-top: 0.25rem; }
+    .row { display: flex; gap: 0.5rem; }
+    input { flex: 1; padding: 0.65rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; }
+    button { padding: 0.65rem 1.1rem; background: #0f766e; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    button:hover { background: #115e59; }
+  </style>
+</head>
+<body>
+  <h2>Computational Biology AI Chatbot</h2>
+  <p class="sub">TF-IDF (1–2 n-grams) + Cosine Similarity (threshold = 0.20)</p>
+
+  <div id="chat">
+    <div class="msg bot">Hi! Ask a question about basic computational biology concepts (e.g., BLAST, FASTA, SNP, docking, alignment, central dogma).</div>
+  </div>
+
+  <div class="row">
+    <input id="q" type="text" placeholder="Type your question..." onkeydown="if(event.key==='Enter') send()" />
+    <button onclick="send()">Ask</button>
+  </div>
+
+  <script>
+    const KB = [
+      ["What is bioinformatics?", "Bioinformatics applies computer science, statistics, and algorithms to analyze biological data such as DNA, RNA, and protein sequences."],
+      ["What is a genome?", "A genome is the complete set of genetic material (DNA, or RNA in some viruses) present in an organism."],
+      ["What is sequence alignment?", "Sequence alignment arranges DNA, RNA, or protein sequences to identify regions of similarity that may indicate functional, structural, or evolutionary relationships."],
+      ["What is the difference between global and local alignment?", "Global alignment (Needleman-Wunsch) aligns sequences end-to-end, while local alignment (Smith-Waterman) finds the highest-scoring conserved regions within sequences."],
+      ["What is BLAST?", "BLAST (Basic Local Alignment Search Tool) is a heuristic algorithm used to rapidly search sequence databases for regions similar to a query sequence."],
+      ["What is a FASTA file?", "FASTA is a text-based sequence format where a header line starting with '>' is followed by sequence characters on subsequent lines."],
+      ["What is GenBank?", "GenBank is the NIH genetic sequence database containing an annotated collection of all publicly available nucleotide sequences and protein translations."],
+      ["What is PDB?", "The Protein Data Bank (PDB) is a repository of 3D structural data for biological macromolecules such as proteins and nucleic acids."],
+      ["What is a SNP?", "A single nucleotide polymorphism (SNP) is a variation at a single base position in a DNA sequence occurring commonly within a population."],
+      ["What is molecular docking?", "Molecular docking is a computational method that predicts the preferred orientation and binding affinity of a ligand inside a protein binding site."],
+      ["What is the central dogma of molecular biology?", "The central dogma describes the flow of genetic information from DNA to RNA via transcription and from RNA to protein via translation."],
+      ["What is a protein structure?", "Protein structure is organized into primary (amino acid sequence), secondary (alpha-helices, beta-sheets), tertiary (3D fold), and quaternary (multi-subunit) levels."],
+      ["What is next-generation sequencing (NGS)?", "Next-generation sequencing (NGS) refers to high-throughput technologies that sequence millions of DNA or RNA fragments in parallel."],
+      ["What is a phylogenetic tree?", "A phylogenetic tree is a branching diagram that represents evolutionary relationships among biological species or sequences inferred from genetic or morphological data."]
+    ];
+
+    const STOPWORDS = new Set([
+      "a","about","above","after","again","against","all","am","an","and","any","are","as","at","be","because",
+      "been","before","being","below","between","both","but","by","can","did","do","does","doing","down","during",
+      "each","few","for","from","further","had","has","have","having","he","her","here","hers","herself","him",
+      "himself","his","how","i","if","in","into","is","it","its","itself","just","me","more","most","my","myself",
+      "no","nor","not","now","of","off","on","once","only","or","other","our","ours","ourselves","out","over","own",
+      "same","she","should","so","some","such","than","that","the","their","theirs","them","themselves","then",
+      "there","these","they","this","those","through","to","too","under","until","up","very","was","we","were",
+      "what","when","where","which","while","who","whom","why","will","with","you","your","yours","yourself","yourselves"
+    ]);
+
+    const THRESHOLD = 0.20;
+    const FALLBACK = "Sorry, I don't have an answer for that yet.";
+
+    function cleanText(text) {
+      return text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+    }
+
+    function getNgrams(text) {
+      const tokens = cleanText(text).split(" ").filter(t => t && !STOPWORDS.has(t));
+      const grams = [...tokens];
+      for (let i = 0; i < tokens.length - 1; i++) {
+        grams.push(`${tokens[i]} ${tokens[i + 1]}`);
+      }
+      return grams;
+    }
+
+    const docsGrams = KB.map(([q, a]) => getNgrams(`${q} ${a}`));
+    const df = new Map();
+    for (const grams of docsGrams) {
+      for (const term of new Set(grams)) {
+        df.set(term, (df.get(term) || 0) + 1);
+      }
+    }
+
+    const N = KB.length;
+    const idf = new Map();
+    for (const [term, count] of df.entries()) {
+      idf.set(term, Math.log((1 + N) / (1 + count)) + 1);
+    }
+
+    function toTfIdf(grams) {
+      const tf = new Map();
+      for (const g of grams) tf.set(g, (tf.get(g) || 0) + 1);
+
+      const vec = new Map();
+      let normSq = 0;
+      for (const [term, count] of tf.entries()) {
+        if (!idf.has(term)) continue;
+        const sublinearTf = 1 + Math.log(count);
+        const weight = sublinearTf * idf.get(term);
+        vec.set(term, weight);
+        normSq += weight * weight;
+      }
+      const norm = Math.sqrt(normSq) || 1;
+      for (const [term, weight] of vec.entries()) {
+        vec.set(term, weight / norm);
+      }
+      return vec;
+    }
+
+    function cosineSim(vecA, vecB) {
+      const [smaller, larger] = vecA.size < vecB.size ? [vecA, vecB] : [vecB, vecA];
+      let dot = 0;
+      for (const [term, val] of smaller.entries()) {
+        if (larger.has(term)) dot += val * larger.get(term);
+      }
+      return dot;
+    }
+
+    const kbVectors = docsGrams.map(toTfIdf);
+
+    function askBot(query) {
+      const qVec = toTfIdf(getNgrams(query));
+      let bestIdx = -1;
+      let bestScore = -1;
+
+      kbVectors.forEach((docVec, idx) => {
+        const score = cosineSim(qVec, docVec);
+        if (score > bestScore) {
+          bestScore = score;
+          bestIdx = idx;
+        }
+      });
+
+      if (bestScore < THRESHOLD || bestIdx === -1) {
+        return { answer: FALLBACK, score: bestScore, matched: null };
+      }
+      return { answer: KB[bestIdx][1], score: bestScore, matched: KB[bestIdx][0] };
+    }
+
+    function appendMessage(text, cls, metaText = "") {
+      const chat = document.getElementById("chat");
+      const div = document.createElement("div");
+      div.className = `msg ${cls}`;
+      div.textContent = text;
+      if (metaText) {
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = metaText;
+        div.appendChild(meta);
+      }
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function send() {
+      const input = document.getElementById("q");
+      const text = input.value.trim();
+      if (!text) return;
+      appendMessage(text, "user");
+      input.value = "";
+
+      const res = askBot(text);
+      const meta = res.matched
+        ? `Matched: "${res.matched}" | Similarity: ${res.score.toFixed(2)}`
+        : `Similarity: ${Math.max(0, res.score).toFixed(2)} (< ${THRESHOLD.toFixed(2)})`;
+      appendMessage(res.answer, "bot", meta);
+    }
+  </script>
+</body>
+</html>
